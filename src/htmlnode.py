@@ -1,4 +1,4 @@
-from textnode import TextType
+from textnode import TextType, block_to_block_type, markdown_to_blocks
 
 class HTMLNode:
     def __init__(self, tag = None, value = None, children = None, props = None):
@@ -66,3 +66,9 @@ def text_node_to_html_node(text_node):
             return LeafNode("img", "", {"src": text_node.url, "alt": text_node.text})
         case _:
             raise Exception("text node has invalid text_type")
+
+def markdown_to_html_node(markdown):
+    blocks = markdown_to_blocks(markdown)
+    for block in blocks:
+        blocktype = block_to_block_type(block)
+
