@@ -1,4 +1,4 @@
-from textnode import TextType, block_to_block_type, markdown_to_blocks
+from textnode import TextType, block_to_block_type, markdown_to_blocks, text_to_textnodes
 
 class HTMLNode:
     def __init__(self, tag = None, value = None, children = None, props = None):
@@ -69,6 +69,65 @@ def text_node_to_html_node(text_node):
 
 def markdown_to_html_node(markdown):
     blocks = markdown_to_blocks(markdown)
+    children = []
     for block in blocks:
+        print(block)
         blocktype = block_to_block_type(block)
+        print(blocktype)
+        children += text_to_children(block, blocktype)
+    parent = ParentNode("div", children)
+    return parent
+
+
+def text_to_children(text, blocktype):
+    outputnodes = []
+    match blocktype:
+        case "paragraph":
+            textnodes = text_to_textnodes(text)
+            htmlnodes = []
+            for node in textnodes:
+                htmlnodes.append(text_node_to_html_node(node))
+            outputnodes += htmlnodes
+        case "heading":
+            htmlnode = LeafNode("h1", text.split("# ",1)[1])
+            outputnodes += [htmlnode]
+        case "code":
+            textnodes = text_to_textnodes(text)
+            htmlnodes = []
+            for node in textnodes:
+                htmlnodes.append(text_node_to_html_node(node))
+            outputnodes += htmlnodes
+        case "quote":
+            parsed = "\n".join(list(map(lambda l: l.split(">",1)[1], text.split("\n"))))
+            outputnodes += [LeafNode("blockquote", parsed)]
+        case "unordered_list":
+            parsed = ""
+            if text[0] == "-":
+                parsed = "\n".join(list(map(lambda l: l.split("- ",1)[1], text.split("\n"))))
+            else:
+                parsed = "\n".join(list(map(lambda l: l.split("* ",1)[1], text.split("\n"))))
+            print(parsed)
+            if parsed == "":
+                # bad list, treat as paragraph
+                return text_to_children(text, "paragraph")
+            children = []
+            for line in parsed.split("\n"):
+                textnodes = text_to_textnodes(line)
+                linehtmlnodes = []
+                for node in textnodes:
+                    linehtmlnodes.append(text_node_to_html_node(node))
+                children.append(HTMLNode("li", children = linehtmlnodes))
+            outputnodes += [HTMLNode("ul", children = children)]
+        case "ordered_list":
+            parsed = "\n".join(list(map(lambda l: l.split(". ",1)[1], text.split("\n"))))
+            children = []
+            for line in parsed.split("\n"):
+                textnodes = text_to_textnodes(line)
+                linehtmlnodes = []
+                for node in textnodes:
+                    linehtmlnodes.append(text_node_to_html_node(node))
+                children.append(HTMLNode("li", children = linehtmlnodes))
+            outputnodes += [HTMLNode("ul", children = children)]
+
+    return outputnodes
 
