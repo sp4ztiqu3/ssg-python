@@ -11,8 +11,12 @@ class HTMLNode:
         raise NotImplementedError
 
     def props_to_html(self):
+        print(self)
         if self.props is not None:
-            return f' href="{self.props["href"]}" target="{self.props["target"]}"'
+            out = ""
+            for key in self.props:
+                out += f' {key}="{self.props[key]}"'
+            return out #f' href="{self.props["href"]}" target="{self.props["target"]}"'
         return ""
 
     def __repr__(self):
@@ -61,7 +65,7 @@ def text_node_to_html_node(text_node):
         case TextType.CODE:
             return LeafNode("code", text_node.text)
         case TextType.LINK:
-            return LeafNode("a", text_node.text, {"href": text_node.url})
+            return LeafNode("a", text_node.text, {"href": text_node.url, "target": "_self" })
         case TextType.IMAGE:
             return LeafNode("img", "", {"src": text_node.url, "alt": text_node.text})
         case _:
@@ -98,7 +102,7 @@ def text_to_children(text, blocktype):
                 htmlnodes.append(text_node_to_html_node(node))
             outputnodes += htmlnodes
         case "quote":
-            parsed = "\n".join(list(map(lambda l: l.split(">",1)[1], text.split("\n"))))
+            parsed = "\n".join(list(map(lambda l: l.split("> ",1)[1], text.split("\n"))))
             outputnodes += [LeafNode("blockquote", parsed)]
         case "unordered_list":
             parsed = ""
@@ -116,8 +120,8 @@ def text_to_children(text, blocktype):
                 linehtmlnodes = []
                 for node in textnodes:
                     linehtmlnodes.append(text_node_to_html_node(node))
-                children.append(HTMLNode("li", children = linehtmlnodes))
-            outputnodes += [HTMLNode("ul", children = children)]
+                children.append(ParentNode("li", children = linehtmlnodes))
+            outputnodes += [ParentNode("ul", children = children)]
         case "ordered_list":
             parsed = "\n".join(list(map(lambda l: l.split(". ",1)[1], text.split("\n"))))
             children = []
@@ -126,8 +130,8 @@ def text_to_children(text, blocktype):
                 linehtmlnodes = []
                 for node in textnodes:
                     linehtmlnodes.append(text_node_to_html_node(node))
-                children.append(HTMLNode("li", children = linehtmlnodes))
-            outputnodes += [HTMLNode("ul", children = children)]
+                children.append(ParentNode("li", children = linehtmlnodes))
+            outputnodes += [ParentNode("ul", children = children)]
 
     return outputnodes
 
